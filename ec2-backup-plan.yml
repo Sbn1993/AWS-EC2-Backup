@@ -1,0 +1,71 @@
+Description: EC2 backup plan template to enable Windows VSS and add backup rule to take backup of assigned resources daily at 7am UTC.
+Resources:
+  BackupRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: BackupRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "backup.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Path: /
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForBackup
+        - arn:aws:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForRestores
+        
+  KMSKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: "Encryption key for daily"
+      EnableKeyRotation: True
+      Enabled: True
+      KeyPolicy:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              "AWS": { "Fn::Sub": "arn:${AWS::Partition}:iam::${AWS::AccountId}:root" }
+            Action:
+              - kms:*
+            Resource: "*"
+
+  BackupVaultWithDailyBackups:
+    Type: "AWS::Backup::BackupVault"
+    Properties:
+      BackupVaultName: "BackupVaultWithDailyBackups"
+      EncryptionKeyArn: !GetAtt KMSKey.Arn
+
+  BackupPlanWithDailyBackups:
+    Type: "AWS::Backup::BackupPlan"
+    Properties:
+      BackupPlan:
+        BackupPlanName: "BackupPlanWithDailyBackups"
+        AdvancedBackupSettings:
+          - ResourceType: EC2
+            BackupOptions:
+              WindowsVSS: enabled
+        BackupPlanRule:
+          -
+            RuleName: "RuleForDailyBackups"
+            TargetBackupVault: !Ref BackupVaultWithDailyBackups
+            ScheduleExpression: "cron(0 7 ? * * *)"
+            Lifecycle:
+                 DeleteAfterDays: 7
+  TagBasedBackupSelection:
+    Type: "AWS::Backup::BackupSelection"
+    Properties:
+      BackupSelection:
+        SelectionName: "TagBasedBackupSelection"
+        IamRoleArn: !GetAtt BackupRole.Arn
+        ListOfTags:
+          - ConditionType: "STRINGEQUALS"
+            ConditionKey: "daily-ec2"
+            ConditionValue: "running"
+      BackupPlanId: !Ref BackupPlanWithDailyBackups
+
+    DependsOn: BackupVaultWithDailyBackups
