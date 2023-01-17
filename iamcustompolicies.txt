@@ -1,0 +1,57 @@
+Version: '2012-10-17'
+Statement:
+  - Effect: Allow
+    Action:
+      - 'ec2:CreateTags'
+      - 'ec2:DeleteSnapshot'
+    Resource: 'arn:aws:ec2:*::snapshot/*'
+  - Effect: Allow
+    Action:
+      - 'ec2:CreateImage'
+      - 'ec2:DeregisterImage'
+    Resource: '*'
+  - Effect: Allow
+    Action:
+      - 'ec2:CopyImage'
+      - 'ec2:CopySnapshot'
+    Resource: '*'
+  - Effect: Allow
+    Action:
+      - 'ec2:CreateTags'
+    Resource: 'arn:aws:ec2:*:*:image/*'
+  - Effect: Allow
+    Action:
+      - 'ec2:DescribeSnapshots'
+      - 'ec2:DescribeTags'
+      - 'ec2:DescribeImages'
+      - 'ec2:DescribeInstances'
+      - 'ec2:DescribeInstanceAttribute'
+      - 'ec2:DescribeInstanceCreditSpecifications'
+      - 'ec2:DescribeNetworkInterfaces'
+      - 'ec2:DescribeElasticGpus'
+      - 'ec2:DescribeSpotInstanceRequests'
+    Resource: '*'
+  - Effect: Allow
+    Action:
+      - 'ec2:CreateSnapshot'
+      - 'ec2:DeleteSnapshot'
+      - 'ec2:DescribeVolumes'
+      - 'ec2:DescribeSnapshots'
+    Resource:
+      - 'arn:aws:ec2:*::snapshot/*'
+      - 'arn:aws:ec2:*:*:volume/*'
+  - Action:
+      - 'tag:GetResources'
+    Resource: '*'
+    Effect: Allow
+  - Effect: Allow
+    Action:
+      - 'backup:DescribeBackupVault'
+      - 'backup:CopyIntoBackupVault'
+    Resource: 'arn:aws:backup:*:*:backup-vault:*'
+  - Effect":"Allow",
+    Action:
+      - 'ssm:SendCommand',
+    Resource:
+        'arn:aws:ssm:*:*:document/AWSEC2-CreateVssSnapshot',
+        'arn:aws:ec2:*:*:instance/*'
