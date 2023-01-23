@@ -1,4 +1,4 @@
-# AWS-EC2-Backup
+# AWS-EC2-Backup  & AWS S3 File Gateway
 
 ## Description
 Requiring an Automation in the plaform AWS accounts to take daily AMI of EC2 instances with a specific tag
