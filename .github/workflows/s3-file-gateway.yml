@@ -1,0 +1,52 @@
+name: Terraform CI/CD
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Set up Terraform
+      uses: hashicorp/setup-terraform@v1
+      with:
+        terraform_version: 0.14.8
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-west-2
+    - name: Init Terraform
+      run: terraform init
+    - name: Plan Terraform
+      run: terraform plan -out=tfplan
+    - name: Approval
+      id: approval
+      uses: actions/request-approval@v2
+      if: always()
+      with:
+        reviewers: ${{ secrets.APPROVERS }}
+  apply:
+    runs-on: ubuntu-latest
+    needs: plan
+    if: steps.approval.outputs.approved == 'true'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Set up Terraform
+      uses: hashicorp/setup-terraform@v1
+      with:
+        terraform_version: 0.14.8
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-west-2
+    - name: Apply Terraform
+      run: terraform apply -input=false tfplan
