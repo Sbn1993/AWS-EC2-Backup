@@ -1,7 +1,19 @@
 Description: EC2 backup plan template to enable Windows VSS and add backup rule to take backup of assigned resources daily at 7am UTC.
+
+Conditions:
+  IsRegionUsEast1:
+  !Equals
+  - !Ref "AWS::Region"
+  - us-east-1
+
+Parameters:
+  iamarn:
+     Type: String
+     Default: arn:aws:iam::${AWS::AccountId}:role/BackupRole
 Resources:
   BackupRole:
     Type: "AWS::IAM::Role"
+    Condition: IsRegionUsEast1
     Properties:
       RoleName: BackupRole
       AssumeRolePolicyDocument:
@@ -58,10 +70,12 @@ Resources:
                  DeleteAfterDays: 7
   TagBasedBackupSelection:
     Type: "AWS::Backup::BackupSelection"
+    DependsOn: iamarn
     Properties:
       BackupSelection:
         SelectionName: "TagBasedBackupSelection"
-        IamRoleArn: !GetAtt BackupRole.Arn
+        IamRoleArn: !Sub
+        'arn:aws:iam::${AWS::AccountId}:role/BackupRole'
         ListOfTags:
           - ConditionType: "STRINGEQUALS"
             ConditionKey: "daily-ec2"
